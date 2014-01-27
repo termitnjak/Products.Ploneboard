@@ -1,6 +1,7 @@
 import copy
 import re
 
+from Acquisition import aq_acquire
 from ZODB.PersistentMapping import PersistentMapping
 from zope.interface import implements
 
@@ -88,6 +89,12 @@ class TextToEmoticons:
         # Get acquisition context
         context = kwargs.get('context')
         
+        try:
+            aq_acquire(context, 'REQUEST')
+        except:
+            # XXX: we don't have a request (e.g. when copying a site)
+            return data
+
         url_tool = getToolByName(context, 'portal_url')
         dict = EmoticonDataProvider.defaultEmoticons()
         
