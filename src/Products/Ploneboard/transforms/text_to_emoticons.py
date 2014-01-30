@@ -1,6 +1,9 @@
+# -*- coding: utf-8 -*-
+
 import copy
 import re
 
+from Acquisition import aq_acquire
 from ZODB.PersistentMapping import PersistentMapping
 from zope.interface import implements
 
@@ -19,13 +22,13 @@ class EmoticonDataProvider(TransformDataProvider):
         """
         self.config = PersistentMapping()
         self.config_metadata = PersistentMapping()
-        
+
         self.config.update({ 'inputs' : self.defaultEmoticons()})
 
         self.config_metadata.update({
             'inputs' : {
-                'key_label' : 'emoticon code', 
-                'value_label' : 'image name', 
+                'key_label' : 'emoticon code',
+                'value_label' : 'image name',
                 'description' : 'Emoticons to images mapping'}
             })
 
@@ -58,7 +61,7 @@ class TextToEmoticons:
 
     __implements__ = itransform
     if ITransform:
-        implements(ITransform) 
+        implements(ITransform)
 
     __name__ = "text_to_emoticons"
     output = "text/plain"
@@ -70,7 +73,7 @@ class TextToEmoticons:
             }
         if name:
             self.__name__ = name
-            
+
     def name(self):
         return self.__name__
 
@@ -87,14 +90,20 @@ class TextToEmoticons:
         """
         # Get acquisition context
         context = kwargs.get('context')
-        
+
+        try:
+            aq_acquire(context, 'REQUEST')
+        except:
+            # XXX: we don't have a request (e.g. when copying a site)
+            return data
+
         url_tool = getToolByName(context, 'portal_url')
         dict = EmoticonDataProvider.defaultEmoticons()
-        
+
         # Here we need to find relative images path to the root of site
         # This is done for image cashing.
         dictionary = copy.deepcopy(dict)
-        
+
         rev_dict = {}
         for k, v in dict.items():
             rev_dict[v] = k
@@ -108,12 +117,12 @@ class TextToEmoticons:
         for rec in results:
             obj = rec[1]
             dictionary[rev_dict[obj.getId()]] = '<img src="%s" />' % url_tool.getRelativeContentURL(obj)
-        
+
         #based on ASPN recipe - http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/81330
         # Create a regular expression  from the dictionary keys
         regex = re.compile("(%s)(?!\")" % "|".join(map(re.escape, dictionary.keys())))
         # For each match, look-up corresponding value in dictionary
-        newdata = regex.sub(lambda mo, d=dictionary: d[mo.string[mo.start():mo.end()]], orig) 
+        newdata = regex.sub(lambda mo, d=dictionary: d[mo.string[mo.start():mo.end()]], orig)
         data.setData(newdata)
         return data
 
