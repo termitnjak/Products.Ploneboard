@@ -37,7 +37,9 @@ else:
 
 if m:
     if pm.checkPermission('Modify Portal Content', m):
-        putils.acquireLocalRoles(m, 0)
+        # Used to be putils.acquireLocalRoles(m, 0), but we don't want to block
+        # local roles!
+        putils.acquireLocalRoles(m)
 
     context.portal_ploneboard.clearUploadedFiles()
     new_context = m

@@ -101,7 +101,9 @@ def setupCommentLocalRoles(self):
     for c in comments:
         # Do not update needlessly. Screws up modified
         if not pu.isLocalRoleAcquired(c):
-            pu.acquireLocalRoles(c, 0)
+            # Used to be pu.acquireLocalRoles(c, 0), but we don't want to block
+            # local roles!
+            pu.acquireLocalRoles(c)
             count += 1
     self.plone_log('setupCommentLocalRoles', 'Updated %d of total %d comments' % (count, len(comments)))
 
